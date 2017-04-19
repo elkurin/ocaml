@@ -43,10 +43,11 @@ let e2 = (EMul (e1, EConstInt 8));;
 eval (ESub (e2, EConstInt 6));;
 
 (*-----例題3-----*)
-let l = ref (0, 0);;
+let l = ref 0;;
 let f x =
-	l := (let (n, _) = !l in (x, n));
-	let (n, p) = !l in p;;
+	let temp = !l in
+		l := x;
+		temp;;
 f 10;;
 f (- 5);;
 f 3;;
