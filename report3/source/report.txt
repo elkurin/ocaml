@@ -1,0 +1,182 @@
+-----問1-----
+
+sortの実行ファイル生成実行
+	例の通りの順番で実行した
+	動作例
+	$ ./sort << END
+	> world
+	> hell
+	> hellz
+	> h
+	> END
+	h
+	hell
+	hello
+	hellz
+	world
+
+.cmoをインタープリターで利用
+	#load "strSet.cmo";;
+	上記を打つことで、module StrSetがつかえるようになった
+	一方で、"sort.cmo"は以下のようなエラーが出た
+	The files sort.cmo and /usr/bin/ocaml disagree over interface Sort
+	sortの名前がコンフリクトしているようなので、名称を変更した
+	mysort.mlに変えたところ、mysort.cmoをload出きるようになった
+	しかし、strSet.cmoよりも前にloadしようとすると、strSetが未定義のためloadに失敗
+	strSet.cmoの後にmysort.cmoをloadすると、引数待ちの状態になる
+	以下のようになった
+	# #load "strSet.cmo";;
+	# #load "mysort.cmo";;
+	ac
+	qw
+	ad
+	ac
+	ad
+	qw
+
+	#load_rec を使うと必要なものも全部再帰的にロードしてくれるので、strSet.cmoをロードしなくても良かった
+	# #load_rec "mysort.cmo";;
+	sdc
+	qqw
+	eeg
+	d
+	d
+	eeg
+	qqw
+	sdc
+
+
+.mliをコンパイルしない場合
+	以下のエラーがでた
+	File "strSet.ml", line 1:
+	Error: Could not find the .cmi file for interface strSet.mli.
+	.cmiファイルが無いとコンパイルできなかった
+
+コンパイル順を変えるとき
+	以下のエラーが出た
+	File "_none_", line 1:
+	Error: Error while linking mysort.cmo:
+	Reference to undefined global `StrSet'
+
+
+OCamlMakefileを使用
+	OCamlMakefileをcloneし、Makefileは以下のように書いた
+
+	RESULT = sort
+	SOURCES = \
+		strSet.mli strSet.ml\
+		sort.ml
+	  
+	OCAMLMAKEFILE = OCamlMakefile
+	include $(OCAMLMAKEFILE)
+
+	これを使用してコンパイルすると、makeとコマンドを入力するだけでコンパイルができた
+
+
+-----問2-----
+stack.mlにコードを書いた
+空っぽのstackからpopしようとすると、例外処理でErrorを返すように実装した
+以下のように動作した
+# open Stack;;
+# let s = empty;;
+val s : 'a list = []
+# let s = pop s;;
+Exception: Error.
+# let s = push 2 s;;
+val s : int list = [2]
+# let s = push 3 s;;
+val s : int list = [3; 2]
+# let s = push 4 s;;
+val s : int list = [4; 3; 2]
+# size s;;
+- : int = 3
+# let s = (let (x, xs) = pop s) in xs;;
+Error: Syntax error: operator expected.
+# let s = (let (x, xs) = (pop s)) in xs;;
+Error: Syntax error: operator expected.
+# let s = let (x, xs) = (pop s) in xs;;
+val s : int list = [3; 2]
+# let s = let (x, xs) = (pop s) in xs;;
+val s : int list = [2]
+# let s = let (x, xs) = (pop s) in xs;;
+val s : int list = []
+# let s = let (x, xs) = (pop s) in xs;;
+Exception: Error.
+
+またsignitureを与えて 'a list * int でも動くか検証した(テストコードはコメントアウトしたところ)
+'a listがスタックで、それにサイズをもつintが付随するものを実装した
+# let s = empty;;
+val s : 'a list * int = ([], 0)
+# let s = push 2 s;;
+val s : int list * int = ([2], 1)
+# let s = push 3 s;;
+val s : int list * int = ([3; 2], 2)
+# let s = push 4 s;;
+val s : int list * int = ([4; 3; 2], 3)
+# let s = let (a, b) = (pop s) in b;;
+val s : int list * int = ([3; 2], 2)
+# size s;;
+- : int = 2
+
+
+-----問3-----
+btree.mlに二本木で実装した
+treeの型は以前この講義で使ったものを再利用した
+ノードの削除は、左のノードを親にして、その右についている木を移動させるという方針で実装した
+
+動作例は以下
+# open Btree;;
+# let s = add 2 empty;;
+val s : Btree.t = <abstr>
+# let s = add 3 s;;
+val s : Btree.t = <abstr>
+# let s = add 3 s;;
+val s : Btree.t = <abstr>
+# let s = add 3 s;;
+val s : Btree.t = <abstr>
+# count 3 s;;
+- : int = 3
+# let s = remove 3 s;;
+val s : Btree.t = <abstr>
+# count 3 s;;
+- : int = 2
+# let s = remove 1 s;;
+val s : Btree.t = <abstr>
+# count 4 s;;
+- : int = 0
+
+-----問4-----
+map.mlに実装した
+keyとvalueを持つ二分木の形で実装
+テストはOrderedIntを渡して行なった
+
+以下が動作例
+# open MapInt;;
+# let s = empty;;
+val s : 'a MapInt.t = <abstr>
+# let s = add 2 b s;;
+Error: Unbound value b
+# let s = add 2 "b" s;;
+val s : string MapInt.t = <abstr>
+# let s = add 3 "c" s;;
+val s : string MapInt.t = <abstr>
+# let s = add 1 "a" s;;
+val s : string MapInt.t = <abstr>
+# lookup 1 s;;
+- : string = "a"
+# lookup 3 s;;
+- : string = "c"
+# let s = remove 2 s;;
+val s : string MapInt.t = <abstr>
+# lookup 2 s;;
+Exception: Empty.
+# lookup 3 s;;
+- : string = "c"
+# let s = add 2 "B" (add 3 "C" empty);;
+val s : string MapInt.t = <abstr>
+# lookup 2 s;;
+- : string = "B"
+# let s = add 2 "b" s;;
+val s : string MapInt.t = <abstr>
+# lookup 2 s;;
+- : string = "b"

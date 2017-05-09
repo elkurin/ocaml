@@ -14,34 +14,38 @@ type expr =
 	| EIfElse	 of expr * expr * expr;;
 
 let addV a b =
-	match a with
-	| VInt  x -> (match b with | VInt y -> VInt (x + y) | VBool y -> raise Eval_error)
-	| VBool x -> (match b with | VInt y -> raise Eval_error | VBool y -> VBool (not (x && y)));;
+	match (a, b) with
+	| (VInt x, VInt y)	-> VInt (x + y)
+	| (VBool x, VBool y)-> VBool (not (x && y))
+	| _					-> raise Eval_error;;
 
 let subV a b =
-	match a with
-	| VInt  x -> (match b with | VInt y -> VInt (x - y) | VBool y -> raise Eval_error)
-	| VBool x -> (match b with | VInt y -> raise Eval_error | VBool y -> VBool (not (x && y)));;
+	match (a, b) with
+	| (VInt x, VInt y)	-> VInt (x - y)
+	| (VBool x, VBool y)-> VBool (not (x && y))
+	| _					-> raise Eval_error;;
 
 let mulV a b =
-	match a with
-	| VInt  x -> (match b with | VInt y -> VInt (x * y) | VBool y -> raise Eval_error)
-	| VBool x -> (match b with | VInt y -> raise Eval_error | VBool y -> VBool ((x = true) && (y = true)));;
+	match (a, b) with
+	| (VInt x, VInt y)	-> VInt (x * y)
+	| (VBool x, VBool y)-> VBool ((x = true) && (y = true))
+	| _					-> raise Eval_error;;
 
 let divV a b =
-	match a with
-	| VInt  x -> (match b with | VInt y -> VInt (x / y) | VBool y -> raise Eval_error)
-	| VBool x -> raise Eval_error;;
+	match (a, b) with
+	| (VInt x, VInt y) 	-> VInt (x / y)
+	| _					-> raise Eval_error;;
 
 let eqV a b =
-	match a with
-	| VInt  x -> (match b with | VInt y -> VBool (x = y) | VBool y -> raise Eval_error)
-	| VBool x -> (match b with | VInt y -> raise Eval_error | VBool y -> VBool (x = y));;
+	match (a, b) with
+	| (VInt x, VInt y)	-> VBool (x = y)
+	| (VBool x, VBool y)-> VBool (x = y)
+	| _					-> raise Eval_error;;
 
 let ltV a b =
-	match a with
-	| VInt  x -> (match b with | VInt y -> VBool (x < y) | VBool y -> raise Eval_error)
-	| VBool x -> raise Eval_error;;
+	match (a, b) with
+	| (VInt x, VInt y) 	-> VBool (x < y)
+	| _					-> raise Eval_error;;
 
 let ifV c a b =
 	match c with
@@ -70,7 +74,8 @@ let e = EMul (a, b);;
 let g = EAdd (t, f);;
 let h = EMul (t, f);;
 let i = EAdd (a, t);;
-let k = EEq (t, f);;
+let j = EEq (t, f);;
+let k = EEq (a, b);;
 let l = ELt (a, b);;
 let m = EIfElse (t, a, b);;
 
@@ -81,6 +86,7 @@ eval d;;
 eval e;;
 eval g;;
 eval h;;
+eval j;;
 eval k;;
 eval l;;
 eval m;;
