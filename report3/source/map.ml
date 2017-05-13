@@ -1,5 +1,3 @@
-exception Empty;;
-
 type ('a, 'b) tree =
   | Leaf
   | Node of 'a * 'b * ('a, 'b) tree * ('a, 'b) tree;;
@@ -28,7 +26,7 @@ module type MAP =
 	  val empty  : 'a t
 	  val add    : T.t -> 'a -> 'a t -> 'a t
 	  val remove : T.t -> 'a t -> 'a t
-	  val lookup : T.t -> 'a t -> 'a
+	  val lookup : T.t -> 'a t -> 'a -> 'a
 	end
 
 module Map : MAP =
@@ -58,14 +56,15 @@ module Map : MAP =
 					| Node (p,q,y,z) ->
 					  Node (p,q, y, (merge r z)))
 			  | GT -> Node (k, v, l, (remove key r)))
-	let rec lookup key t =
+	(* 引数にkey, t, nullをとる ここでnullは、keyが見つからなかった時に返してほしい値 *)
+	let rec lookup key t null =
 		match t with
-		| Leaf -> raise Empty
+		| Leaf -> null
 		| Node (k,v,l,r) ->
 			(match T.compare key k with
-			| LT -> lookup key l
+			| LT -> lookup key l null
 			| EQ -> v
-			| GT -> lookup key r)
+			| GT -> lookup key r null)
   end
 
 

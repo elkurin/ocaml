@@ -1,10 +1,11 @@
 type 'a m = 'a * string
 
 (** (>>=) : 'a m -> ('a -> 'b m) -> 'b m *)
-let (>>=) (x : 'a m) (f : 'a -> 'b m) = (* Write Here *)
+let (>>=) (x : 'a m) (f : 'a -> 'b m) = 
+	let (n, m) = x in let (ns, ms) = (f n) in (ns, (m ^ ms))
   
 (** return : 'a -> 'a m *)
-let return (x : 'a) = (* Write Here *)
+let return (x : 'a) = (x, "")
 
 (** writer : string -> unit m *)
 let writer (m : string) = ((), m)
@@ -37,3 +38,4 @@ let _ =
   Fib(0)
   Fib(1)
  *)
+
