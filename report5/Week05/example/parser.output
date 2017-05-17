@@ -1,0 +1,260 @@
+   0  $accept : %entry% $end
+
+   1  toplevel : expr SEMISEMI
+
+   2  expr : IF expr THEN expr ELSE expr
+   3       | factor_expr EQ factor_expr
+   4       | factor_expr LT factor_expr
+   5       | factor_expr PLUS factor_expr
+   6       | factor_expr
+
+   7  factor_expr : atomic_expr
+
+   8  atomic_expr : INT
+   9              | BOOL
+  10              | ID
+  11              | LPAR expr RPAR
+
+  12  %entry% : '\001' toplevel
+
+state 0
+	$accept : . %entry% $end  (0)
+
+	'\001'  shift 1
+	.  error
+
+	%entry%  goto 2
+
+
+state 1
+	%entry% : '\001' . toplevel  (12)
+
+	INT  shift 3
+	BOOL  shift 4
+	ID  shift 5
+	IF  shift 6
+	LPAR  shift 7
+	.  error
+
+	toplevel  goto 8
+	expr  goto 9
+	factor_expr  goto 10
+	atomic_expr  goto 11
+
+
+state 2
+	$accept : %entry% . $end  (0)
+
+	$end  accept
+
+
+state 3
+	atomic_expr : INT .  (8)
+
+	.  reduce 8
+
+
+state 4
+	atomic_expr : BOOL .  (9)
+
+	.  reduce 9
+
+
+state 5
+	atomic_expr : ID .  (10)
+
+	.  reduce 10
+
+
+state 6
+	expr : IF . expr THEN expr ELSE expr  (2)
+
+	INT  shift 3
+	BOOL  shift 4
+	ID  shift 5
+	IF  shift 6
+	LPAR  shift 7
+	.  error
+
+	expr  goto 12
+	factor_expr  goto 10
+	atomic_expr  goto 11
+
+
+state 7
+	atomic_expr : LPAR . expr RPAR  (11)
+
+	INT  shift 3
+	BOOL  shift 4
+	ID  shift 5
+	IF  shift 6
+	LPAR  shift 7
+	.  error
+
+	expr  goto 13
+	factor_expr  goto 10
+	atomic_expr  goto 11
+
+
+state 8
+	%entry% : '\001' toplevel .  (12)
+
+	.  reduce 12
+
+
+state 9
+	toplevel : expr . SEMISEMI  (1)
+
+	SEMISEMI  shift 14
+	.  error
+
+
+state 10
+	expr : factor_expr . EQ factor_expr  (3)
+	expr : factor_expr . LT factor_expr  (4)
+	expr : factor_expr . PLUS factor_expr  (5)
+	expr : factor_expr .  (6)
+
+	PLUS  shift 15
+	EQ  shift 16
+	LT  shift 17
+	THEN  reduce 6
+	ELSE  reduce 6
+	RPAR  reduce 6
+	SEMISEMI  reduce 6
+
+
+state 11
+	factor_expr : atomic_expr .  (7)
+
+	.  reduce 7
+
+
+state 12
+	expr : IF expr . THEN expr ELSE expr  (2)
+
+	THEN  shift 18
+	.  error
+
+
+state 13
+	atomic_expr : LPAR expr . RPAR  (11)
+
+	RPAR  shift 19
+	.  error
+
+
+state 14
+	toplevel : expr SEMISEMI .  (1)
+
+	.  reduce 1
+
+
+state 15
+	expr : factor_expr PLUS . factor_expr  (5)
+
+	INT  shift 3
+	BOOL  shift 4
+	ID  shift 5
+	LPAR  shift 7
+	.  error
+
+	factor_expr  goto 20
+	atomic_expr  goto 11
+
+
+state 16
+	expr : factor_expr EQ . factor_expr  (3)
+
+	INT  shift 3
+	BOOL  shift 4
+	ID  shift 5
+	LPAR  shift 7
+	.  error
+
+	factor_expr  goto 21
+	atomic_expr  goto 11
+
+
+state 17
+	expr : factor_expr LT . factor_expr  (4)
+
+	INT  shift 3
+	BOOL  shift 4
+	ID  shift 5
+	LPAR  shift 7
+	.  error
+
+	factor_expr  goto 22
+	atomic_expr  goto 11
+
+
+state 18
+	expr : IF expr THEN . expr ELSE expr  (2)
+
+	INT  shift 3
+	BOOL  shift 4
+	ID  shift 5
+	IF  shift 6
+	LPAR  shift 7
+	.  error
+
+	expr  goto 23
+	factor_expr  goto 10
+	atomic_expr  goto 11
+
+
+state 19
+	atomic_expr : LPAR expr RPAR .  (11)
+
+	.  reduce 11
+
+
+state 20
+	expr : factor_expr PLUS factor_expr .  (5)
+
+	.  reduce 5
+
+
+state 21
+	expr : factor_expr EQ factor_expr .  (3)
+
+	.  reduce 3
+
+
+state 22
+	expr : factor_expr LT factor_expr .  (4)
+
+	.  reduce 4
+
+
+state 23
+	expr : IF expr THEN expr . ELSE expr  (2)
+
+	ELSE  shift 24
+	.  error
+
+
+state 24
+	expr : IF expr THEN expr ELSE . expr  (2)
+
+	INT  shift 3
+	BOOL  shift 4
+	ID  shift 5
+	IF  shift 6
+	LPAR  shift 7
+	.  error
+
+	expr  goto 25
+	factor_expr  goto 10
+	atomic_expr  goto 11
+
+
+state 25
+	expr : IF expr THEN expr ELSE expr .  (2)
+
+	.  reduce 2
+
+
+15 terminals, 6 nonterminals
+13 grammar rules, 26 states

@@ -74,7 +74,7 @@ OCamlMakefileを使用
 
 
 -----問2-----
-stack.mlにコードを書いた
+2.mlにコードを書いた
 空っぽのstackからpopしようとすると、例外処理でErrorを返すように実装した
 以下のように動作した
 # open Stack;;
@@ -120,9 +120,11 @@ val s : int list * int = ([3; 2], 2)
 
 
 -----問3-----
-btree.mlに二本木で実装した
+3-1.mlに二分木で実装した
 treeの型は以前この講義で使ったものを再利用した
 ノードの削除は、左のノードを親にして、その右についている木を移動させるという方針で実装した
+
+また3-2.mlにバケットソート的なデータ構造で実装した
 
 動作例は以下
 # open Btree;;
@@ -146,7 +148,7 @@ val s : Btree.t = <abstr>
 - : int = 0
 
 -----問4-----
-map.mlに実装した
+4.mlに実装した
 keyとvalueを持つ二分木の形で実装
 テストはOrderedIntを渡して行なった
 
@@ -180,3 +182,33 @@ val s : string MapInt.t = <abstr>
 val s : string MapInt.t = <abstr>
 # lookup 2 s;;
 - : string = "b"
+
+-----問5-----
+5.mlに実装した
+Vectorに行列演算、Matrixに行列演算をつくった
+行列のかけ算は先に転置してから3重ループで計算している(計算量は転置を含めてO(n^3))
+
+動作例
+# open  BoolMatrix;;
+# add [[true; false]; [false; true]] [[false; false]; [true; true]];;
+- : SemiringBool.t list list = [[true; false]; [true; true]]
+# mul [[true; false]; [false; true]] [[false; false]; [true; true]];;
+- : SemiringBool.t list list = [[false; false]; [true; true]]
+# add [[false; true]] [[true; true]; [false; false]];;
+Exception: SizeFail.
+
+# open MinMatrix;;
+# add [[SemiringMin.Int 1; SemiringMin.Int 2]] [[SemiringMin.Int 2; SemiringMin.Inf]];;
+- : SemiringMin.t list list = [[SemiringMin.Int 1; SemiringMin.Int 2]]
+# mul [[SemiringMin.Int 1; SemiringMin.Int 2]] [[SemiringMin.Int 2]; [SemiringMin.Inf]];;
+- : SemiringMin.t list list = [[SemiringMin.Int 0]]
+
+-----発展1-----
+6.mlに実装した
+Eq.equalは同値関係なので、両方向の関数をペアとして持った
+型が違うもの(intが入るべき所にboolとか)については必ずEq.reflでのチェックではじかれるので、正しい型を返すものを適当に入れればよい
+(返す値のところを型をあわせられていなかったため、ずっと下記のエラーに悩まされた
+Error: This definition has type int expr -> int value
+       which is less general than 'a. 'a expr -> 'a value)
+テストはファイルの下部に書いており、実行すると結果が出る
+
