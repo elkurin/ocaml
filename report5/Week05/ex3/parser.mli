@@ -4,6 +4,7 @@ type token =
   | ID of (string)
   | LET
   | IN
+  | LAND
   | PLUS
   | TIMES
   | MINUS
@@ -18,6 +19,7 @@ type token =
   | LPAR
   | RPAR
   | SEMISEMI
+  | ERROR
 
 val toplevel :
   (Lexing.lexbuf  -> token) -> Lexing.lexbuf -> Syntax.command

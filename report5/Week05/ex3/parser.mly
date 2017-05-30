@@ -35,7 +35,7 @@ let_expr:
 
 la_expr:
   | var EQ expr SEMISEMI     { CDecl ($1, $3) }
-  | var EQ expr LAND la_expr { DDecl ($1, $3, $5) }
+  | var EQ expr LAND la_expr { NDecl ($1, $3, $5) }
 ;
 
 lai_expr:

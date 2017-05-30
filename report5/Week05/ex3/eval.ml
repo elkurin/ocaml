@@ -110,35 +110,34 @@ let rec eval_expr env e =
     (match x with
     | Err _ -> x
     | Ok y  -> eval_expr (extend e1 y env) e3)
-    
 
-let rec eval_command env c =
+let rec eval_command env l c =
   match c with
-  | CExp e -> ("-", env, eval_expr env e)
+  | CExp e -> (("-", (eval_expr env e)) :: [], env)
   | CDecl (e1, e2) ->
           let x = eval_expr env e2 in 
           (match x with
-          | Err _ -> (e1, env, x)
-          | Ok y  -> (e1, (extend e1 y env), x))
+          | Err _ -> ((e1, x) :: [], env)
+          | Ok y  -> ((e1, x) :: [], (extend e1 y env)))
   | DDecl (e1, e2, e3) ->
-          let x =  eval_expr env e2 in
+          let x =  eval_expr env e2 in 
           (match x with
-          | Err _ -> (e1, env, x)
-          | Ok y  -> Printf.printf "%s = " e1;
-                     print_value y;
-                     print_newline ();
-                     eval_command (extend e1 y env) e3)
+          | Err _ -> ((e1, x) :: [], env)
+          | Ok y  -> let (r1, r2) = eval_command (extend e1 y env) (extend e1 y l) e3 in ((e1, x) :: r1, r2))
   | NDecl (e1, e2, e3) ->
           let x =  eval_expr env e2 in
           (match x with
-          | Err _ -> (e1, env, x)
-          | Ok y  -> eval_command (extend e1 y env) e3)
+          | Err _ -> ((e1, x) :: [], env)
+          | Ok y  -> 
+               (match lookup e1 l with
+                  | None ->  let (r1, r2) = eval_command (extend e1 y env) (extend e1 y l) e3 in ((e1, x) :: r1, r2)
+                  | Some _ -> ((e1, (Err ("Error: Variable " ^ e1 ^ " is bound several times in this matching"))) :: [], env)))
   | DLai (e1, e2, e3, e4) ->
           let x = eval_expr env e2 in
           (match x with
-          | Err _ -> (e1, env, x)
-          | Ok y  -> let (_, newenv, _) = eval_command (extend e1 y env) e3 in
+          | Err _ -> ((e1, x) :: [], env)
+          | Ok y  -> let (_, newenv) = eval_command (extend e1 y env) (extend e1 y l) e3 in
                      let p = eval_expr newenv e4 in
                      (match p with
-                     | Err _ -> (e1, env, x)
-                     | Ok q  -> ("-", env, p)))
+                     | Err _ -> ((e1, x) :: [], env)
+                     | Ok q  -> (("-", p) :: [], env)))
