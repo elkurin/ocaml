@@ -3,7 +3,10 @@ open Syntax
 type env = (name * value) list
 
 let empty_env = []
-let extend x v env = (x, v) :: env
+let rec extend x v env = 
+    match env with
+    | []           -> (x, v) :: []
+    | (y, z) :: ys -> if y = x then (x, v) :: ys else (y, z) :: (extend x v ys)
 
 type 'a option = Some of 'a | None
 let rec lookup x env =
@@ -98,14 +101,15 @@ let rec eval_expr env e =
   | EIf (e1,e2,e3) ->
     let v1 = eval_expr env e1 in
     (match v1 with
+     | Err _ -> v1
      | Ok (VBool b) ->
        if b then eval_expr env e2 else eval_expr env e3
      | Ok (VInt i) -> Err ("Error: " ^ (string_of_int i) ^ " has type int but an expression was expected of type bool"))
   | ELet (e1,e2,e3) ->
     let x = eval_expr env e2 in
-    match x with
+    (match x with
     | Err _ -> x
-    | Ok y  -> eval_expr (extend e1 y env) e3
+    | Ok y  -> eval_expr (extend e1 y env) e3)
     
 
 let rec eval_command env c =
@@ -116,3 +120,25 @@ let rec eval_command env c =
           (match x with
           | Err _ -> (e1, env, x)
           | Ok y  -> (e1, (extend e1 y env), x))
+  | DDecl (e1, e2, e3) ->
+          let x =  eval_expr env e2 in
+          (match x with
+          | Err _ -> (e1, env, x)
+          | Ok y  -> Printf.printf "%s = " e1;
+                     print_value y;
+                     print_newline ();
+                     eval_command (extend e1 y env) e3)
+  | NDecl (e1, e2, e3) ->
+          let x =  eval_expr env e2 in
+          (match x with
+          | Err _ -> (e1, env, x)
+          | Ok y  -> eval_command (extend e1 y env) e3)
+  | DLai (e1, e2, e3, e4) ->
+          let x = eval_expr env e2 in
+          (match x with
+          | Err _ -> (e1, env, x)
+          | Ok y  -> let (_, newenv, _) = eval_command (extend e1 y env) e3 in
+                     let p = eval_expr newenv e4 in
+                     (match p with
+                     | Err _ -> (e1, env, x)
+                     | Ok q  -> ("-", env, p)))

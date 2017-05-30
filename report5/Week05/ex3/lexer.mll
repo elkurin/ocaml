@@ -15,6 +15,7 @@ rule main = parse
 | "<"          { Parser.LT }
 | "let"        { Parser.LET }
 | "in"         { Parser.IN }
+| "and"        { Parser.LAND }
 | "if"         { Parser.IF }
 | "then"       { Parser.THEN }
 | "else"       { Parser.ELSE }
@@ -25,4 +26,4 @@ rule main = parse
 | ";;"         { Parser.SEMISEMI }
 | digit+ as n  { Parser.INT (int_of_string n) }
 | ident  as id { Parser.ID id }
-| _            { failwith ("Unknown Token: " ^ Lexing.lexeme lexbuf)}
+| _            { Parser.ERROR }

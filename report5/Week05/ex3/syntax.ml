@@ -22,6 +22,9 @@ type expr =
 type command =
   | CExp  of expr
   | CDecl of name * expr
+  | DDecl of name * expr * command
+  | NDecl of name * expr * command
+  | DLai  of name * expr * command * expr
 				  
 let print_name = print_string 
 
@@ -117,3 +120,18 @@ let rec print_command p =
                       print_string "=";
                       print_expr   e2;
                       print_string ")"
+  | DDecl (e1, e2, e3) -> print_string "DDecl ("; 
+                          print_string e1;
+                          print_string "=";
+                          print_expr   e2;
+                          print_string ")"
+  | NDecl (e1, e2, e3) -> print_string "NDecl ("; 
+                          print_string e1;
+                          print_string "=";
+                          print_expr   e2;
+                          print_string ")"
+  | DLai (e1, e2, e3, e4)  -> print_string "NLai ("; 
+                              print_string e1;
+                              print_string "=";
+                              print_expr   e2;
+                              print_string ")"
