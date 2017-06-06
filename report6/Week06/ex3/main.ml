@@ -12,6 +12,13 @@ let rec read_eval_print env =
        print_newline ();
        read_eval_print newenv))
    with
+    | Eval.EvalErr        -> print_string "Error: Eval error";
+                             print_newline ();
+                             read_eval_print env
+    | Eval.Unbound msg    -> print_string "Error: Unbound ";
+                             print_string msg;
+                             print_newline ();
+                             read_eval_print env
     | Parsing.Parse_error -> print_string "Error: Syntax error";
                              print_newline ();
                              read_eval_print env)

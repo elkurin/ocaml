@@ -23,6 +23,11 @@ let rec lookup x env =
   | [] -> None
   | (n, v) :: xs -> if x = n then Some v else lookup x xs
 
+let rec fun_expr vars e =
+    match vars with
+    | [] -> e
+    | v :: vs -> EFun (v, fun_expr vs e)
+
 exception EvalErr
 
 let rec eval_expr env e =
@@ -33,6 +38,7 @@ let rec eval_expr env e =
     VBool b
   | EFun (e1, e2) -> 
      VFun (e1, e2, env)
+  | EFuns (e1, e2) -> eval_expr env (fun_expr e1 e2)
   | EVar x ->
      (match lookup x env with
      | Some v -> v
@@ -82,6 +88,10 @@ let rec eval_expr env e =
   | ELet (e1,e2,e3) ->
     let x = eval_expr env e2 in
     eval_expr (extend e1 x env) e3
+  | ELetFun (l,e1,e2) ->
+    (match l with
+      | [] -> raise EvalErr
+      | f :: vars -> eval_expr env (ELet (f, fun_expr vars e1, e2)))
   | ELetRec (l, e) ->
     let newenv = extend_rec l l env in eval_expr newenv e
   | EApp (e1, e2) -> 
@@ -100,6 +110,10 @@ let rec eval_command env c =
   | CDecl (e1, e2) ->
           let x = eval_expr env e2 in 
           (e1, (extend e1 x env), x)
+  | CFunDecl (l, e) ->
+          (match l with
+          | [] -> raise EvalErr
+          | f :: vars -> eval_command env (CDecl (f, fun_expr vars e)))
   | CRecDecl l -> ("-", extend_rec l l env, VEmpty)
 
 let print_value x =
