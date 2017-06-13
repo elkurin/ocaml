@@ -1,6 +1,7 @@
 open Syntax
 
 exception Unbound of string
+type 'a option = Some of 'a | None
 
 type env = (name * value) list
 and value = 
@@ -18,7 +19,6 @@ let rec extend_rec f l env =
   | [] -> env
   | (e1,e2,e3) :: xs -> (e1, VRecFun ((e1,e2,e3),l,env)) :: (extend_rec xs l env)
 
-type 'a option = Some of 'a | None
 let rec lookup x env =
   match env with
   | [] -> None

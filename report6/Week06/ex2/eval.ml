@@ -7,7 +7,6 @@ and value =
     | VInt  of int
     | VBool of bool
     | VFun  of name * expr * env ref
-    | VRecFun of name * name * expr * env ref
 
 let empty_env = []
 let extend x v env = (x, v) :: env
@@ -87,10 +86,6 @@ let rec eval_expr env e =
     let v2 = eval_expr env e2 in
     (match v1 with
       | VFun (x, e, oenv) -> eval_expr (extend x v2 !oenv) e
-      | VRecFun (f, x, e, oenv) ->
-              oenv := (f, (VRecFun(f,x,e,oenv))) :: !oenv;
-              oenv := (x, v2) :: !oenv;
-              eval_expr !oenv e
       | _ -> raise EvalErr)
 
 let rec eval_command env c =
@@ -101,7 +96,7 @@ let rec eval_command env c =
           (e1, (extend e1 x env), x)
   | CRecDecl (e1, e2, e3) ->
           let oenv = ref [] in
-          let x = VRecFun (e1,e2,e3,oenv) in
+          let x = VFun (e2,e3,oenv) in
           oenv := extend e1 x env;
           (e1, !oenv, x)
           
@@ -111,5 +106,4 @@ let print_value x =
   | VInt i  -> print_int i
   | VBool b -> print_string (string_of_bool b)
   | VFun _ -> print_string "<fun>"
-  | VRecFun _ -> print_string "<fun>"
 

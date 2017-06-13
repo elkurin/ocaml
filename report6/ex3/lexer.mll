@@ -9,12 +9,13 @@ rule main = parse
 | "*"          { Parser.TIMES }
 | "-"          { Parser.MINUS }
 | "/"          { Parser.DIV }
+| "&&"         { Parser.AND}
+| "||"         { Parser.OR}
 | "="          { Parser.EQ }
 | "<"          { Parser.LT }
 | "let"        { Parser.LET }
-| "rec"        { Parser.REC }
-| "and"        { Parser.AND }
 | "in"         { Parser.IN }
+| "and"        { Parser.LAND }
 | "if"         { Parser.IF }
 | "then"       { Parser.THEN }
 | "else"       { Parser.ELSE }
@@ -23,7 +24,6 @@ rule main = parse
 | "("          { Parser.LPAR }
 | ")"          { Parser.RPAR }
 | "fun"        { Parser.FUN}
-| "dfun"       { Parser.DFUN}
 | "->"         { Parser.ARROW }
 | ";;"         { Parser.SEMISEMI }
 | digit+ as n  { Parser.INT (int_of_string n) }

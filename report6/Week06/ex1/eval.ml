@@ -1,33 +1,15 @@
 open Syntax
 
-exception Unbound of string
-
-type env = (name * value) list
-and value = 
-    | VInt  of int
-    | VBool of bool
-    | VFun  of name * expr * env
-    | VDFun of name * expr
-    | VRecFun of (name * name * expr) * (name * name * expr) list * env
-    | VEmpty
+exception Unbound
 
 let empty_env = []
 let extend x v env = (x, v) :: env
-let rec extend_rec f l env =
-  match f with
-  | [] -> env
-  | (e1,e2,e3) :: xs -> (e1, VRecFun ((e1,e2,e3),l,env)) :: (extend_rec xs l env)
 
 type 'a option = Some of 'a | None
 let rec lookup x env =
   match env with
   | [] -> None
   | (n, v) :: xs -> if x = n then Some v else lookup x xs
-
-let rec fun_expr vars e =
-    match vars with
-    | [] -> e
-    | v :: vs -> EFun (v, fun_expr vs e)
 
 exception EvalErr
 
@@ -39,13 +21,10 @@ let rec eval_expr env e =
     VBool b
   | EFun (e1, e2) -> 
      VFun (e1, e2, env)
-  | EFuns (e1, e2) -> eval_expr env (fun_expr e1 e2)
-  | EDFun (e1, e2) -> 
-     VDFun (e1, e2)
   | EVar x ->
      (match lookup x env with
      | Some v -> v
-     | _ -> raise (Unbound x))
+     | _ -> raise Unbound)
   | EAdd (e1,e2) ->
     let v1 = eval_expr env e1 in
     let v2 = eval_expr env e2 in
@@ -91,21 +70,14 @@ let rec eval_expr env e =
   | ELet (e1,e2,e3) ->
     let x = eval_expr env e2 in
     eval_expr (extend e1 x env) e3
-  | ELetFun (l,e1,e2) ->
-    (match l with
-      | [] -> raise EvalErr
-      | f :: vars -> eval_expr env (ELet (f, fun_expr vars e1, e2)))
-  | ELetRec (l, e) ->
-    let newenv = extend_rec l l env in eval_expr newenv e
+  | ELetRec (f,x,e1,e2) ->
+    let rec oenv = (f, VFun(x,e1,oenv)) :: env in
+    eval_expr oenv e2
   | EApp (e1, e2) -> 
     let v1 = eval_expr env e1 in
     let v2 = eval_expr env e2 in
     (match v1 with
       | VFun (x, e, oenv) -> eval_expr (extend x v2 oenv) e
-      | VDFun (x, e)      -> eval_expr (extend x v2 env) e
-      | VRecFun ((f,x,e), l, oenv) ->
-              let newenv = extend x v2 (extend_rec l l oenv) in
-              eval_expr newenv e
       | _ -> raise EvalErr)
 
 let rec eval_command env c =
@@ -114,18 +86,13 @@ let rec eval_command env c =
   | CDecl (e1, e2) ->
           let x = eval_expr env e2 in 
           (e1, (extend e1 x env), x)
-  | CFunDecl (l, e) ->
-          (match l with
-          | [] -> raise EvalErr
-          | f :: vars -> eval_command env (CDecl (f, fun_expr vars e)))
-  | CRecDecl l -> ("-", extend_rec l l env, VEmpty)
+  | CRecDecl (e1,e2,e3) ->
+          let rec oenv = (e1, VFun(e2,e3,oenv)) :: env in
+          (e1, oenv, VFun(e2,e3,oenv))
 
 let print_value x =
   match x with
   | VInt i  -> print_int i
   | VBool b -> print_string (string_of_bool b)
-  | VFun _  -> print_string "<fun>"
-  | VDFun _ -> print_string "<fun>"
-  | VRecFun _ -> print_string "<fun>"
-  | VEmpty  -> print_string "<fun>"
+  | VFun (n, v, env) -> print_string "<fun>"
 

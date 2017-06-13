@@ -1,0 +1,107 @@
+問1,2,3,発展1,3はex3の中に
+問4はex2の中に
+発展2はex1の中に書いた
+
+-----問1-----
+式が定義されたらVFunというvalue型に適応して環境に追加する
+関数適用がきたらVFunの変数名に対応する値をいれて環境に追加し、その環境の中でVFunに保存された関数を計算する
+
+-----問2-----
+VRecFunというvalue型で再帰関数を保存する
+VFunの中身に自身の関数名を足したものをVRecFunとし、環境に保存する
+関数適用の時も、普通の関数のように引数を代入する値とひもづけて環境に追加し、それに加えて関数自身の情報も追加した環境下でVRecFunに保存された関数を計算する
+
+-----問3-----
+問2のやり方から拡張する
+問2では一つの関数のみ処理すれば良かったが、相互再帰ではn個の関数を同時に処理する必要がある
+したがって、どの関数も他のandで結ばれたすべての関数の情報を持つようにクロージャを定義する
+つまりVRecFunの型を以下のようにする
+(自身の関数名 * 自身の引数名 * 自身の評価式) * (それぞれの関数名 * それぞれの引数名 * それぞれの評価式) list * 環境
+関数適応の際はまず引数に代入する値を結びつけて環境に追加した後、andで結ばれたすべての関数を追加した環境で計算すればよい
+
+-----問4-----
+参照を利用して循環的クロージャを作る
+VFunの型は最後の環境を参照としたものとする
+ダミー環境への参照oenvを作りそれをVFunの環境に入れる
+このoenvには再帰のように環境にVFun(f,e1,oenv)を追加することが出来るので、このように環境を拡張する
+関数適応の際も同様にoenvに追加してから計算する
+
+-----発展1-----
+引数が2個以上あるものは
+fun x -> fun y -> fun z -> ...
+の形に直す
+つまりVFunの中に入れ子にしていく形にしてすでに実装している評価関数に適応出きるような形に直すことで評価する戦略をとった
+let f x yの形でも同様
+parserではlet var varsとすることで、varsの中身が1個以上のvarのリストとして保存した
+
+-----発展2-----
+再帰関数のクロージャを値の再帰定義で定めてこれを環境に追加することで再帰関数の評価を成立させた
+VFunの中身にどんどん再帰を追加していく形をとっているが、これは再帰関数の計算で必要になるまでVFunの中身を計算しておらず遅延評価ができているため計算可能になっている
+
+-----発展3-----
+dfunの環境は関数定義時のものとは限らないので、VDFun型は環境を持たないvalue型とする
+関数適応の際は適応する時の環境に引数を追加して計算する
+これを用いると例えば以下のようにかくと再帰関数が定義できる
+let fact = dfun n -> if n = 0 then 1 else (fact (n - 1)) * n;;
+
+動作例
+~問1,2,3発展1,3~
+# let f = fun x y z -> x + y * z;;
+f = <fun>
+# f 2 3 4;;
+- = 14
+# let rec f n = if n = 0 then 0 else f (n - 1) + n;;
+- = <fun>
+# f 10;;
+- = 55
+# let rec g n = if n = 0 then 1 else (g (n - 1)) * n in g 5;;
+- = 120
+# g 4;;
+Error: Unbound g
+# let rec even n = if n = 0 then true else odd (n - 1)
+and       odd n = if n = 0 then false else even (n - 1);;
+- = <fun>
+# even 3;;
+- = false
+# even 10;;
+- = true
+# let rec a n = if n = 0 then true else b (n - 1)
+and       b n = if n = 0 then false else a (n - 1) in a 4;;
+- = true
+# a 5;;
+Error: Unbound a
+# let a = 10;;          
+a = 10
+# let f = (dfun x -> x + a);;
+f = <fun>
+# f 0;;   
+- = 10
+# let a = 20;;
+a = 20
+# f 0;;
+- = 20
+# let f = dfun n -> if n = 0 then 0 else f (n - 1) + n;;
+f = <fun>
+# f 10;;
+- = 55
+
+~問4~
+# let rec f n = if n = 0 then 0 else f (n - 1) + n;;
+f = <fun>
+# 
+f 10;;
+- = 55
+# let rec g n = if n = 0 then 1 else (g (n - 1)) * n in g 5;;
+- = 120
+# g 4;;
+Fatal error: exception Eval.Unbound
+
+~発展2~
+# let rec f n = if n = 0 then 0 else f (n - 1) + n in f 10;;
+- = 55
+# let a = 1;;
+# let rec f n = if n = 0 then a else f (n - 1) + n;;    
+f = <fun>
+# f 10;;
+- = 56
+

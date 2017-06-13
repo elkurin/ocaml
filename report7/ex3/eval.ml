@@ -129,3 +129,10 @@ let print_value x =
   | VRecFun _ -> print_string "<fun>"
   | VEmpty  -> print_string "<fun>"
 
+open TySyntax
+type constraints (ty * ty) list
+type tyenv = (name * ty) list
+
+let rec infer_cmd c (env : tyenv) =
+  match c with
+  | CExp e -> 

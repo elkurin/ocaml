@@ -12,19 +12,21 @@ type expr =
   | ELt        of expr * expr		 
   | EIf        of expr * expr * expr
   | ELet       of name * expr * expr
-  | ELetFun    of name list * expr * expr
+  | ELetRec    of name * name * expr * expr
   | EFun       of name * expr
-  | EFuns      of name list * expr
-  | EDFun      of name * expr
   | EApp       of expr * expr
-  | ELetRec    of (name * name * expr) list * expr
 
 type command =
   | CExp     of expr
   | CDecl    of name * expr
-  | CFunDecl of name list * expr
-  | CRecDecl of (name * name * expr) list
+  | CRecDecl of name * name * expr
 				  
+type env = (name * value) list
+and value = 
+    | VInt  of int
+    | VBool of bool
+    | VFun  of name * expr * env
+
 let print_name = print_string 
 
 (*
@@ -91,16 +93,16 @@ let rec print_expr e =
       print_string ",";
       print_expr e2;
       print_string ")")
+  | ELetRec (f,x,e1,e2) ->
+     (print_string ("ELet (" ^ f ^ ",");
+      print_string x;
+      print_string ",";
+      print_expr e1;
+      print_string ",";
+      print_expr e2;
+      print_string ")")
   | EFun (x,e) ->
      (print_string ("EFun (" ^ x ^ ",");
-      print_expr e;
-      print_string ")")
-  | EFuns (x,e) ->
-     (print_string ("EFuns (");
-      print_expr e;
-      print_string ")")
-  | EDFun (x,e) ->
-     (print_string ("EDFun (" ^ x ^ ",");
       print_expr e;
       print_string ")")
   | EApp (e1,e2) ->
@@ -109,18 +111,6 @@ let rec print_expr e =
       print_string ",";
       print_expr e2;
       print_string ")")
-  | ELetRec (decls,e) ->
-     (print_string ("ELetRec ([");
-      List.iter (fun (id,x,e) ->
-		 print_string ("(" ^ id ^ "," ^ x ^ ",");
-		 print_expr e;
-		 print_string ");")
-		decls;
-      print_string "],";
-      print_expr e;
-      print_string ")")
-  | ELetFun (l,e1,e2) ->
-     (print_string ("ELetFun"))
        
 let rec print_command p =       
   match p with
@@ -129,13 +119,9 @@ let rec print_command p =
      (print_string ("CDecl (" ^ x ^ ",");
       print_expr e;
       print_string ")")
-  | CFunDecl (l, e) -> 
-     (print_string ("CFunDecl"))
-  | CRecDecl decls ->
-     (print_string ("CRecDecl ([");
-      List.iter (fun (id,x,e) ->
-		 print_string ("(" ^ id ^ "," ^ x ^ ",");
-		 print_expr e;
-		 print_string ");")
-		decls;
-      print_string "])")
+  | CRecDecl (f,x,e) ->
+     (print_string ("CDecl (" ^ f ^ ",");
+      print_string x;
+      print_string ",";
+      print_expr e;
+      print_string ")")

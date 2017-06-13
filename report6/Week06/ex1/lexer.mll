@@ -12,9 +12,8 @@ rule main = parse
 | "="          { Parser.EQ }
 | "<"          { Parser.LT }
 | "let"        { Parser.LET }
-| "rec"        { Parser.REC }
-| "and"        { Parser.AND }
 | "in"         { Parser.IN }
+| "rec"        { Parser.REC }
 | "if"         { Parser.IF }
 | "then"       { Parser.THEN }
 | "else"       { Parser.ELSE }
@@ -23,9 +22,8 @@ rule main = parse
 | "("          { Parser.LPAR }
 | ")"          { Parser.RPAR }
 | "fun"        { Parser.FUN}
-| "dfun"       { Parser.DFUN}
 | "->"         { Parser.ARROW }
 | ";;"         { Parser.SEMISEMI }
 | digit+ as n  { Parser.INT (int_of_string n) }
 | ident  as id { Parser.ID id }
-| _            { Parser.ERROR }
+| _            { failwith ("Unknown Token: " ^ Lexing.lexeme lexbuf)}
