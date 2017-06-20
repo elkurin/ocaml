@@ -13,7 +13,7 @@
 %token LPAR RPAR 
 %token FUN ARROW
 %token DFUN
-%token REC AND
+%token REC
 %token SEMISEMI
 %token ERROR
 
@@ -25,24 +25,20 @@ toplevel:
   | expr SEMISEMI                    { CExp $1 }
   | LET var EQ expr SEMISEMI         { CDecl ($2, $4) }
   | LET var vars EQ expr SEMISEMI    { CFunDecl ($2 :: $3, $5) }
-  | LET REC let_and_decls SEMISEMI   { CRecDecl ($3) }
+  | LET REC var var EQ expr SEMISEMI { CRecDecl ($3, $4, $6) }
 ;
 
-let_and_decls:
-  | var var EQ expr AND let_and_decls { ($1,$2,$4) :: $6 }
-  | var var EQ expr                   { [($1,$2,$4)] }
-  
 expr:
-  | LET var EQ expr IN expr       { ELet($2,$4,$6) }
-  | LET var vars EQ expr IN expr  { ELetFun($2 :: $3,$5,$7) }
-  | LET REC let_and_decls IN expr { ELetRec($3,$5) }
-  | IF expr THEN expr ELSE expr   { EIf($2,$4,$6) }
-  | FUN var ARROW expr            { EFun($2,$4) }
-  | FUN var vars ARROW expr       { EFuns($2 :: $3,$5) }
-  | DFUN var ARROW expr           { EDFun($2,$4) }
-  | arith_expr EQ arith_expr      { EEq($1,$3) }
-  | arith_expr LT arith_expr      { ELt($1,$3) }
-  | arith_expr                    { $1 } 
+  | LET var EQ expr IN expr         { ELet($2,$4,$6) }
+  | LET var vars EQ expr IN expr    { ELetFun($2 :: $3,$5,$7) }
+  | LET REC var var EQ expr IN expr { ELetRec($3,$4,$6,$8) }
+  | IF expr THEN expr ELSE expr     { EIf($2,$4,$6) }
+  | FUN var ARROW expr              { EFun($2,$4) }
+  | FUN var vars ARROW expr         { EFuns($2 :: $3,$5) }
+  | DFUN var ARROW expr             { EDFun($2,$4) }
+  | arith_expr EQ arith_expr        { EEq($1,$3) }
+  | arith_expr LT arith_expr        { ELt($1,$3) }
+  | arith_expr                      { $1 } 
 ;
 
 arith_expr:

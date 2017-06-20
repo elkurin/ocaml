@@ -17,13 +17,13 @@ type expr =
   | EFuns      of name list * expr
   | EDFun      of name * expr
   | EApp       of expr * expr
-  | ELetRec    of (name * name * expr) list * expr
+  | ELetRec    of name * name * expr * expr
 
 type command =
   | CExp     of expr
   | CDecl    of name * expr
   | CFunDecl of name list * expr
-  | CRecDecl of (name * name * expr) list
+  | CRecDecl of name * name * expr
 				  
 let print_name = print_string 
 
@@ -109,15 +109,10 @@ let rec print_expr e =
       print_string ",";
       print_expr e2;
       print_string ")")
-  | ELetRec (decls,e) ->
+  | ELetRec (f,x,e1,e2) ->
      (print_string ("ELetRec ([");
-      List.iter (fun (id,x,e) ->
-		 print_string ("(" ^ id ^ "," ^ x ^ ",");
-		 print_expr e;
-		 print_string ");")
-		decls;
       print_string "],";
-      print_expr e;
+      print_expr e2;
       print_string ")")
   | ELetFun (l,e1,e2) ->
      (print_string ("ELetFun"))
@@ -131,11 +126,6 @@ let rec print_command p =
       print_string ")")
   | CFunDecl (l, e) -> 
      (print_string ("CFunDecl"))
-  | CRecDecl decls ->
+  | CRecDecl (f,x,e) ->
      (print_string ("CRecDecl ([");
-      List.iter (fun (id,x,e) ->
-		 print_string ("(" ^ id ^ "," ^ x ^ ",");
-		 print_expr e;
-		 print_string ");")
-		decls;
       print_string "])")

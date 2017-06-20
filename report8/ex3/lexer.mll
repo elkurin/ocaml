@@ -13,7 +13,6 @@ rule main = parse
 | "<"          { Parser.LT }
 | "let"        { Parser.LET }
 | "rec"        { Parser.REC }
-| "and"        { Parser.AND }
 | "in"         { Parser.IN }
 | "if"         { Parser.IF }
 | "then"       { Parser.THEN }
