@@ -1,0 +1,9 @@
+let多相
+# f x = if x = x then x else f x;;
+val f : ('c -> 'c) = <fun>
+# (f 1 = 1) = (f true = true);;
+- : bool = true
+
+-----発展1-----
+let f x = x x;;
+の型を推論するとxが a->b型かつa型となり、さらにa->b型のaにa->b型を入れることを続けると無限の木を作ることになる
