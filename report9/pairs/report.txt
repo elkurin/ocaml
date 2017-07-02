@@ -1,0 +1,12 @@
+動作例
+# let rec fold_right f = fun l ->  fun e ->
+match l with
+| [] -> e
+| x :: xs -> f x (fold_right f xs e);;
+val fold_right : (('o -> ('u -> 'u)) -> ('o list -> ('u -> 'u))) = <fun>
+# let append_right a b=
+fold_right (fun x y -> x :: y) a b;;
+val append_right : ('o -> ('o list -> 'o list)) = <fun>
+# append_right (1 :: 2 :: 3 :: []) (4 :: 5 :: 6 :: []);;
+- : int list = [1; [2; [3; [4; [5; [6; nil]]]]]]
+
