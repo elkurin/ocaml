@@ -1,0 +1,5 @@
+let rec mapadd x1 = fun x3 -> match x1 with | [] -> 
+[] | x :: xs -> match x3 with | y :: ys -> (x+y) :: (mapadd xs ys) | [] -> [];;
+let tl v = match v with | x :: xs -> xs;;
+let rec fib = 1 :: 1 :: (tl fib);;
+

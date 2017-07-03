@@ -143,6 +143,7 @@ and infer_expr env e =
           let const = const1 @ const2 in
           let a = TyVar (new_tyvar ()) in
           (a, (t1, TyFun(t2, a)) :: const)
+  | EAppReal _ -> raise InferErr
   | EMatch (e, l) ->
           let (t, const) = infer_expr env e in
           let a = TyVar (new_tyvar ()) in

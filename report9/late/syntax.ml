@@ -27,6 +27,7 @@ type expr =
   | ERec       of name * expr
   | EDFun      of name * expr
   | EApp       of expr * expr
+  | EAppReal   of expr * expr
   | ELetRec    of name * name * expr * expr
   | EPair      of expr * expr
   | ECons      of expr * expr
@@ -157,7 +158,7 @@ let rec print_expr e =
      (print_string ("EDFun (" ^ x ^ ",");
       print_expr e;
       print_string ")")
-  | EApp (e1,e2) ->
+  | EApp (e1,e2) | EAppReal (e1,e2) ->
      (print_string "EApp (";
       print_expr e1;
       print_string ",";

@@ -33,6 +33,8 @@ let rec read_eval_print env tyenv =
                              read_eval_print env tyenv
     | Parsing.Parse_error -> print_string "Error: Syntax error";
                              print_newline ();
+                             read_eval_print env tyenv
+    | Failure msg         -> print_string "Error: empty token\n";
                              read_eval_print env tyenv)
 
 let _ = read_eval_print empty_env []
