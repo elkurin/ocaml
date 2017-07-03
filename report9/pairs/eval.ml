@@ -2,7 +2,8 @@ open Syntax
 
 exception Unbound of string
 
-type env = (name * value) list
+type env = (name * thunk) list
+and thunk = Thunk of expr * env | Value of value
 and value = 
     | VInt  of int
     | VBool of bool
@@ -18,7 +19,7 @@ let rec find_match p v =
     match p,v with
     | PInt a, VInt b  -> if a = b then Some [] else None
     | PBool a, VBool b -> if a = b then Some [] else None
-    | PVar s, _ -> Some ((s, v) :: [])
+    | PVar s, _ -> Some ((s, Value v) :: [])
     | PPair (a,b), VPair(c,d) | PCons (a,b), VCons(c,d) -> 
             (match find_match a c, find_match b d with
             | None, _ | _, None -> None
@@ -61,7 +62,8 @@ let rec eval_expr env e =
      VDFun (e1, e2)
   | EVar x ->
      (match lookup x env with
-     | Some v -> v
+     | Some Thunk (thunke, thunkenv) -> eval_expr thunkenv thunke
+     | Some Value v -> v
      | _ -> raise (Unbound x))
   | EAdd (e1,e2) ->
     let v1 = eval_expr env e1 in
@@ -107,26 +109,26 @@ let rec eval_expr env e =
        if b then eval_expr env e2 else eval_expr env e3
      | _ -> raise EvalErr)
   | ELet (e1,e2,e3) ->
-    let x = eval_expr env e2 in
-    eval_expr (extend e1 x env) e3
+    eval_expr (extend e1 (Thunk (e2, env)) env) e3
   | ELetFun (l,e1,e2) ->
     (match l with
       | [] -> raise EvalErr
       | f :: vars -> eval_expr env (ELet (f, fun_expr vars e1, e2)))
+  | ERecFun (f,x,e) ->
+    VRecFun (f,x,e,env)
   | ELetRec (f,x,e1,e2) ->
-    let newenv = extend f (VRecFun (f,x,e1,env)) env in eval_expr newenv e2
+    let newenv = extend f (Thunk (ERecFun (f,x,e1), env)) env in eval_expr newenv e2
   | EApp (e1, e2) -> 
     let v1 = eval_expr env e1 in
-    let v2 = eval_expr env e2 in
     (match v1 with
-      | VFun (x, e, oenv) -> eval_expr (extend x v2 oenv) e
-      | VDFun (x, e)      -> eval_expr (extend x v2 env) e
+      | VFun (x, e, oenv) -> eval_expr (extend x (Thunk (e2, env)) oenv) e
+      | VDFun (x, e)      -> eval_expr (extend x (Thunk (e2, env)) env) e
       | VRecFun (f,x,e,oenv) ->
-              let newenv = extend x v2 (extend f (VRecFun(f,x,e,oenv)) oenv) in
+              let newenv = extend x (Thunk (e2, env)) (extend f (Thunk (ERecFun(f,x,e), oenv)) oenv) in
               eval_expr newenv e
       | _ -> raise EvalErr)
   | EMatch (e, l) ->
-    let v = eval_expr env e in 
+    let v = eval_expr env e in
     (match l with
     | [] -> raise MatchErr
     | (p, s) :: xs -> (match find_match p v with
@@ -136,13 +138,12 @@ let rec eval_command env c =
   match c with
   | CExp e -> ("-", env, eval_expr env e)
   | CDecl (e1, e2) ->
-          let x = eval_expr env e2 in 
-          (("val " ^ e1), (extend e1 x env), x)
+          (("val " ^ e1), (extend e1 (Thunk (e2, env)) env), eval_expr env e2)
   | CFunDecl (l, e) ->
           (match l with
           | [] -> raise EvalErr
           | f :: vars -> eval_command env (CDecl (f, fun_expr vars e)))
-  | CRecDecl (f,x,e) -> (("val " ^ f), (extend f (VRecFun(f,x,e,env)) env), VEmpty)
+  | CRecDecl (f,x,e) -> (("val " ^ f), (extend f (Thunk (ERecFun(f,x,e), env)) env), VEmpty)
 
 let rec print_value x =
   match x with

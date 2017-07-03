@@ -35,10 +35,4 @@ let rec read_eval_print env tyenv =
                              print_newline ();
                              read_eval_print env tyenv)
 
-let initial_env =
-  extend "i" (VInt 1)
-	 (extend "v" (VInt 5)
-		 (extend "x" (VInt 10)
-			 empty_env))
-    
-let _ = read_eval_print initial_env []
+let _ = read_eval_print empty_env []

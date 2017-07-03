@@ -88,6 +88,7 @@ and infer_expr env e =
           let (t, const) = infer_expr ((x, ([], a)) :: env) e in
           (TyFun(a, t), const)
   | EFuns (e1, e2) -> infer_expr env (fun_expr e1 e2)
+  | ERecFun (f,x,e) -> infer_expr env (ELetRec (f,x,e,EVar f))
   | EVar x ->
           (match lookup x env with
            | Some (l, t) -> (create_type l t, [])

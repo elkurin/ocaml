@@ -23,6 +23,7 @@ type expr =
   | ELetFun    of name list * expr * expr
   | EFun       of name * expr
   | EFuns      of name list * expr
+  | ERecFun    of name * name * expr
   | EDFun      of name * expr
   | EApp       of expr * expr
   | ELetRec    of name * name * expr * expr
@@ -140,6 +141,10 @@ let rec print_expr e =
       print_string ")")
   | EFuns (x,e) ->
      (print_string ("EFuns (");
+      print_expr e;
+      print_string ")")
+  | ERecFun (f,x,e) ->
+     (print_string ("ERecFun (" ^ x ^ ",");
       print_expr e;
       print_string ")")
   | EDFun (x,e) ->
