@@ -82,13 +82,15 @@ and infer_expr env e =
           let const = const1 @ const2 in
           let a = TyVar (new_tyvar ()) in
           (TyList a, (a,t1) :: (TyList a, t2) :: const)
-  | ENil -> (TyNil, [])
+  | ENil -> let a = TyVar (new_tyvar ()) in 
+            (TyList a, [])
   | EFun (x, e) | EDFun (x, e) -> 
           let a = TyVar (new_tyvar ()) in 
           let (t, const) = infer_expr ((x, ([], a)) :: env) e in
           (TyFun(a, t), const)
   | EFuns (e1, e2) -> infer_expr env (fun_expr e1 e2)
-  | ERecFun (f,x,e) -> infer_expr env (ELetRec (f,x,e,EVar f))
+  | ERecFun (f,x,e) -> raise InferErr
+  | ERec (x,e) -> raise InferErr
   | EVar x ->
           (match lookup x env with
            | Some (l, t) -> (create_type l t, [])
@@ -174,3 +176,12 @@ let rec infer_cmd (env : tyenv) c =
       let fixed = env_subst subst env in
       let p = free_val (get_tyvar s) fixed in
       (s, (f, (p, s)) ::fixed)
+  | CRecValDecl (x,e) ->
+      let c = TyVar (new_tyvar ()) in
+      let newenv = (x, ([], c)) :: env in
+      let (a, const) = infer_expr newenv e in 
+      let subst = ty_unify const in
+      let s = ty_subst subst a in
+      let fixed = env_subst subst env in
+      let p = free_val (get_tyvar s) fixed in
+      (s, (x, (p, s)) :: fixed)

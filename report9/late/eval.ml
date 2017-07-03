@@ -12,6 +12,7 @@ and value =
     | VFun  of name * expr * env
     | VDFun of name * expr
     | VRecFun of name * name * expr * env
+    | VRec  of name * thunk
     | VPair of thunk * thunk
     | VCons of thunk * thunk
     | VNil
@@ -37,6 +38,8 @@ let rec fun_expr vars e =
 
 let rec find_match p v env = 
     match p,v with
+    | _, VRec (x, Thunk (e,oenv)) -> let vv = eval_expr oenv e in find_match p vv oenv
+    | _, VRec (x, Value vv) -> find_match p vv env
     | PInt a, VInt b  -> if a = b then Some [] else None
     | PBool a, VBool b -> if a = b then Some [] else None
     | PVar s, _ -> Some ((s, ref (Value v)) :: [])
@@ -78,6 +81,12 @@ and eval_expr env e =
   | EFun (e1, e2) -> 
      VFun (e1, e2, env)
   | EFuns (e1, e2) -> eval_expr env (fun_expr e1 e2)
+  | ERecFun (f,x,e) ->
+    VRecFun (f,x,e,env)
+  | ERec (x,e) ->
+    let recr = ref (Thunk (ERec(x,e), env)) in
+    let newenv = extend x recr env in
+    VRec (x, Thunk (e,newenv))
   | EDFun (e1, e2) -> 
      VDFun (e1, e2)
   | EVar x ->
@@ -136,8 +145,6 @@ and eval_expr env e =
     (match l with
       | [] -> raise EvalErr
       | f :: vars -> eval_expr env (ELet (f, fun_expr vars e1, e2)))
-  | ERecFun (f,x,e) ->
-    VRecFun (f,x,e,env)
   | ELetRec (f,x,e1,e2) ->
     let r = ref (Thunk (ERecFun (f,x,e1), env)) in
     let newenv = extend f r env in eval_expr newenv e2
@@ -159,7 +166,10 @@ and eval_expr env e =
     | (p, s) :: xs -> (match find_match p v env with
                       | None -> eval_expr env (EMatch (e, xs))
                       | Some a -> eval_expr (a @ env) s))
+
+let counter = ref 0
 let rec eval_command env c =
+  counter := 0;
   match c with
   | CExp e -> ("-", env, eval_expr env e)
   | CDecl (e1, e2) ->
@@ -171,17 +181,44 @@ let rec eval_command env c =
           | f :: vars -> eval_command env (CDecl (f, fun_expr vars e)))
   | CRecDecl (f,x,e) -> let r = ref (Thunk (ERecFun(f,x,e), env)) in
                         (("val " ^ f), (extend f r env), VEmpty)
+  | CRecValDecl (x,e) -> let r = ref (Thunk (ERec(x,e), env)) in
+                         let newenv = extend x r env in
+                         (("val " ^ x), newenv, eval_expr newenv e)
 
-let counter = ref 0
-let rec print_value x =
+let rec print_value_cons x =
   counter := !counter + 1;
-  if !counter > 1000 then () else
-  (match x with
+  if !counter > 4000 then print_value x else
+  match x with
+  | VCons (Thunk (a,aenv), Thunk (b,benv)) -> 
+          print_value (eval_expr aenv a); print_string "; "; print_value_cons (eval_expr benv b)
+  | VCons (Thunk (a,aenv), Value b) -> 
+          print_value (eval_expr aenv a); print_string "; "; print_value_cons b
+  | VCons (Value a, Thunk (b,benv)) -> 
+          print_value a; print_string "; "; print_value_cons (eval_expr benv b)
+  | VCons (Value a, Value b) -> 
+          print_value a; print_string "; "; print_value_cons b
+  | VNil -> print_string "]"
+  | VRec (x, Value v) -> print_value_cons v
+  | VRec (x, Thunk (e,env)) -> print_value_cons (eval_expr env e)
+  | _ -> raise EvalErr
+and print_value x =
+  counter := !counter + 1;
+  if !counter > 4000 then 
+      match x with
+      | VRec (x, Value v) -> print_value v
+      | VRec (x, Thunk (e,env)) -> print_value (eval_expr env e)
+      | VCons _ | VNil -> print_string ".....]"
+      | VPair _ -> print_string ".....)"
+      | _ -> print_string "....."
+  else
+  match x with
   | VInt i  -> print_int i
   | VBool b -> print_string (string_of_bool b)
   | VFun _  -> print_string "<fun>"
   | VDFun _ -> print_string "<fun>"
   | VRecFun _ -> print_string "<fun>"
+  | VRec (x, Value v) -> print_value v
+  | VRec (x, Thunk (e,env)) -> print_value (eval_expr env e)
   | VPair (Thunk (a,aenv), Thunk (b,benv)) -> 
           print_string "("; print_value (eval_expr aenv a); print_string ", "; print_value (eval_expr benv b); print_string ")"
   | VPair (Thunk (a,aenv), Value b) -> 
@@ -190,13 +227,6 @@ let rec print_value x =
           print_string "("; print_value a; print_string ", "; print_value (eval_expr benv b); print_string ")"
   | VPair (Value a, Value b) -> 
           print_string "("; print_value a; print_string ", "; print_value b; print_string ")"
-  | VCons (Thunk (a,aenv), Thunk (b,benv)) -> 
-          print_string "["; print_value (eval_expr aenv a); print_string "; "; print_value (eval_expr benv b); print_string "]"
-  | VCons (Thunk (a,aenv), Value b) -> 
-          print_string "["; print_value (eval_expr aenv a); print_string "; "; print_value b; print_string "]"
-  | VCons (Value a, Thunk (b,benv)) -> 
-          print_string "["; print_value a; print_string "; "; print_value (eval_expr benv b); print_string "]"
-  | VCons (Value a, Value b) -> 
-          print_string "["; print_value a; print_string "; "; print_value b; print_string "]"
+  | VCons _ -> print_string "["; print_value_cons x
   | VNil -> print_string "nil"
-  | VEmpty  -> print_string "<fun>")
+  | VEmpty  -> print_string "<fun>"

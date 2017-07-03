@@ -24,6 +24,7 @@ type expr =
   | EFun       of name * expr
   | EFuns      of name list * expr
   | ERecFun    of name * name * expr
+  | ERec       of name * expr
   | EDFun      of name * expr
   | EApp       of expr * expr
   | ELetRec    of name * name * expr * expr
@@ -37,6 +38,7 @@ type command =
   | CDecl    of name * expr
   | CFunDecl of name list * expr
   | CRecDecl of name * name * expr
+  | CRecValDecl of name * expr
 				  
 let print_name = print_string 
 
@@ -147,6 +149,10 @@ let rec print_expr e =
      (print_string ("ERecFun (" ^ x ^ ",");
       print_expr e;
       print_string ")")
+  | ERec (x,e) ->
+     (print_string ("ERec (" ^ x ^ ",");
+      print_expr e;
+      print_string ")")
   | EDFun (x,e) ->
      (print_string ("EDFun (" ^ x ^ ",");
       print_expr e;
@@ -191,3 +197,6 @@ let rec print_command p =
   | CRecDecl (f,x,e) ->
      (print_string ("CRecDecl ([");
       print_string "])")
+  | CRecValDecl (x, e) ->
+     print_string  ("CRecValDecl")
+

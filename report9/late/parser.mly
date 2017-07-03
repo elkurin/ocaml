@@ -28,6 +28,7 @@ toplevel:
   | LET var EQ expr SEMISEMI         { CDecl ($2, $4) }
   | LET var vars EQ expr SEMISEMI    { CFunDecl ($2 :: $3, $5) }
   | LET REC var var EQ expr SEMISEMI { CRecDecl ($3, $4, $6) }
+  | LET REC var EQ expr SEMISEMI     { CRecValDecl ($3, $5) }
 ;
 
 expr:
